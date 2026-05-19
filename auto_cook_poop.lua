@@ -4,7 +4,7 @@
 -- ==========================================
 
 -- ==========================================
--- ITEM CONFIG (ISI SENDIRI)
+-- ITEM CONFIG
 -- ==========================================
 local ITEMS = {
     poop   = 8394,
@@ -48,11 +48,6 @@ local function buildOvenGroups()
     local px = math.floor(p.pos.x / 32)
     local py = math.floor(p.pos.y / 32)
 
-    -- ======================================
-    -- LEFT SIDE
-    -- x = -4 dan -3
-    -- y = -2 sampai 2
-    -- ======================================
     for xOffset = -2, -1 do
         for yOffset = -2, 2 do
             table.insert(ovenGroups.left, {
@@ -62,11 +57,6 @@ local function buildOvenGroups()
         end
     end
 
-    -- ======================================
-    -- RIGHT SIDE
-    -- x = 3 dan 4
-    -- y = -2 sampai 2
-    -- ======================================
     for xOffset = 1, 2 do
         for yOffset = -2, 2 do
             table.insert(ovenGroups.right, {

@@ -1,6 +1,15 @@
--- ===================================================
--- AUTO FISHING V19 - FIXED BUTCHER ACTION (TYPE 3)
--- ===================================================
+-- NOTE
+-- SYARAT MENGGUNAKAN SCRIPT AUTO FISHING
+-- 1. 
+
+-- ROD BISA DIGANTI SESUAI KEBUTUHAN BERIKUT ADALAH LIST ID ROD
+-- EZ ROD = 3008
+-- THANKSGIVING DINNER FISHING ROD = 10262
+-- RAINBOW ROD = 5740
+
+-- ==============
+-- AUTO FISHING 
+-- ==============
 
 local fishing_active = false
 local catch_count = 0
@@ -17,8 +26,8 @@ local ID = {
     BAIT_ICE = 5528,
     BAIT_NORMAL = 3016,
 --ezrod 3008, tgrod 10262, rainbowrod 5740
-    EZ_ROD = 5740,
-    SUSHI_KNIFE_ID = 3466 -- ID Item Pisau
+    ROD = 5740,
+    KNIFE_ID = 3466 -- ID Item Pisau
 }
 
 function sendAction(type_packet, val, tx, ty)
@@ -32,9 +41,8 @@ function sendAction(type_packet, val, tx, ty)
     })
 end
 
--- FUNGSI BUTCHER YANG DIPERBAIKI
 -- ===================================================
--- FIX: STABLE WEAR & BUTCHER ACTION
+-- STABLE WEAR & BUTCHER ACTION
 -- ===================================================
 
 function useSushiKnife()
@@ -49,7 +57,7 @@ function useSushiKnife()
         -- Kita kirim dua kali untuk memastikan server menerima perubahan item
         sendPacketRaw(false, {
                 type = 10, -- Type 10 sesuai foto sniffing kamu
-                value = 3466,
+                value = ID.KNIFE_ID,
                 punchx = px,
                 punchy = py,
                 x = getLocal().pos.x,
@@ -78,7 +86,7 @@ function useSushiKnife()
         last_status = "Switching back to Rod..."
         sendPacketRaw(false, {
                 type = 10, -- Type 10 sesuai foto sniffing kamu
-                value = ID.EZ_ROD,
+                value = ID.ROD,
                 punchx = px,
                 punchy = py,
                 x = getLocal().pos.x,
@@ -122,7 +130,7 @@ end
 
 function cast_rod_logic(tx, ty)
     if not fishing_active then return end
-    sendPacket(2, "action|set_item\nitemID|" .. ID.EZ_ROD)
+    sendPacket(2, "action|set_item\nitemID|" .. ID.ROD)
     sleep(500)
     
     local bait_val = ID.BAIT_NORMAL
