@@ -7,10 +7,10 @@
 -- ITEM CONFIG
 -- ==========================================
 local ITEMS = {
-    poop   = 8394,
-    gruel  = 4410,
-    sea    = 8392,
-    urchin = 8252
+    flour   = 4562,
+    egg  =874 ,
+	milk = 868,
+    blueberry    = 196,
 }
 
 -- ==========================================
@@ -29,7 +29,7 @@ local timerDisplay = 0
 
 
 local ovenGroups = {
-    --left = {},
+    left = {},
     right = {}
 }
 
@@ -48,8 +48,8 @@ local function buildOvenGroups()
     local px = math.floor(p.pos.x / 32)
     local py = math.floor(p.pos.y / 32)
 
-    for xOffset = -1, -1 do
-        for yOffset = -2, 0 do
+    for xOffset = -3, -1 do
+        for yOffset = -2, 2 do
             table.insert(ovenGroups.left, {
                 x = px + xOffset,
                 y = py + yOffset
@@ -57,8 +57,8 @@ local function buildOvenGroups()
         end
     end
 
-    for xOffset = 1, 1 do
-        for yOffset = 0, 0 do
+    for xOffset = 1, 3 do
+        for yOffset = -2, 2 do
             table.insert(ovenGroups.right, {
                 x = px + xOffset,
                 y = py + yOffset
@@ -81,97 +81,50 @@ end
 
 local timeline = {
 
-    -- ======================================
-    -- RIGHT OVEN
-    -- ======================================
+    -- STEP 1
+    -- Flour (timer belum mulai)
     {
         time = 0,
-        side = "right",
+        side = "all",
         action = "cook",
-        item = ITEMS.poop,
-        label = "RIGHT : POOP"
+        item = ITEMS.flour,
+        label = "FLOUR"
     },
 
-    -- ======================================
-    -- LEFT OVEN
-    -- ======================================
+    -- STEP 2
+    -- Egg (timer mulai setelah flour selesai)
     {
-        time = 28,
-        side = "left",
-        action = "cook",
-        item = ITEMS.poop,
-        label = "LEFT : POOP"
-    },
-
-    -- ======================================
-    -- RIGHT INGREDIENTS
-    -- ======================================
-    {
-        time = 53,
-        side = "right",
+        time = 10,
+        side = "all",
         action = "place",
-        item = ITEMS.gruel,
-        label = "RIGHT : GRUEL"
+        item = ITEMS.egg,
+        label = "EGG"
     },
 
+    -- STEP 3
     {
-        time = 61,
-        side = "right",
+        time = 36,
+        side = "all",
         action = "place",
-        item = ITEMS.sea,
-        label = "RIGHT : SEA"
+        item = ITEMS.milk,
+        label = "MILK"
     },
 
+    -- STEP 4
     {
-        time = 69,
-        side = "right",
+        time = 50,
+        side = "all",
         action = "place",
-        item = ITEMS.urchin,
-        label = "RIGHT : URCHIN"
+        item = ITEMS.blueberry,
+        label = "BLUEBERRY"
     },
 
-    -- ======================================
-    -- LEFT INGREDIENTS
-    -- ======================================
+    -- STEP 5
     {
-        time = 80,
-        side = "left",
-        action = "place",
-        item = ITEMS.gruel,
-        label = "LEFT : GRUEL"
-    },
-
-    {
-        time = 87,
-        side = "left",
-        action = "place",
-        item = ITEMS.sea,
-        label = "LEFT : SEA"
-    },
-
-    {
-        time = 96,
-        side = "left",
-        action = "place",
-        item = ITEMS.urchin,
-        label = "LEFT : URCHIN"
-    },
-
-    -- ======================================
-    -- PUNCH
-    -- ======================================
-    {
-        time = 104,
-        side = "right",
+        time = 70,
+        side = "all",
         action = "punch",
-        label = "RIGHT : PUNCH"
-    },
-
-    {
-        time = 133,
-        side = "left",
-        action = "punch",
-        label = "LEFT : PUNCH"
+        label = "HARVEST"
     }
 }
 
@@ -212,9 +165,29 @@ end
 -- ==========================================
 -- EXECUTE EVENT
 -- ==========================================
+local function getAllOvens()
+    local ovens = {}
+
+    for _, oven in ipairs(ovenGroups.left) do
+        table.insert(ovens, oven)
+    end
+
+    for _, oven in ipairs(ovenGroups.right) do
+        table.insert(ovens, oven)
+    end
+
+    return ovens
+end
+
 local function executeEvent(event)
 
-    local ovens = ovenGroups[event.side]
+    local ovens
+
+    if event.side == "all" then
+        ovens = getAllOvens()
+    else
+        ovens = ovenGroups[event.side]
+    end
 
     if not ovens then
         return
@@ -230,28 +203,34 @@ local function executeEvent(event)
             return
         end
 
-        -- ==================================
-        -- COOK
-        -- ==================================
         if event.action == "cook" then
 
             sendRaw(3, 32, oven.x, oven.y)
             sleep(180)
-            sendCookPacket(oven.x, oven.y, event.item)
 
-        -- ==================================
-        -- PLACE
-        -- ==================================
+            sendCookPacket(
+                oven.x,
+                oven.y,
+                event.item
+            )
+
         elseif event.action == "place" then
 
-            sendRaw(3, event.item, oven.x, oven.y)
+            sendRaw(
+                3,
+                event.item,
+                oven.x,
+                oven.y
+            )
 
-        -- ==================================
-        -- PUNCH
-        -- ==================================
         elseif event.action == "punch" then
 
-            sendRaw(3, 18, oven.x, oven.y)
+            sendRaw(
+                3,
+                18,
+                oven.x,
+                oven.y
+            )
 
         end
 
@@ -269,45 +248,57 @@ function startCooking()
         return
     end
 
-    logToConsole("`9[START] Dynamic Timeline Cooking")
-
-    local executed = {}
-
-    local cycleStart = os.time()
+    logToConsole("`9[START] Auto Cooking Loop")
 
     local maxTimeline = timeline[#timeline].time
+    local cycle = 1
 
     while isCooking do
 
-        local elapsed = os.time() - cycleStart
+        logToConsole("`2[CYCLE " .. cycle .. "] Started")
 
-        timerDisplay = elapsed
+        currentEvent = "CYCLE " .. cycle
 
-        for index, event in ipairs(timeline) do
+        local executed = {}
+        local cycleStart = os.time()
 
-            if not executed[index] and elapsed >= event.time then
+        while isCooking do
 
-                executed[index] = true
+            local elapsed = os.time() - cycleStart
 
-                executeEvent(event)
+            timerDisplay = elapsed
+
+            for index, event in ipairs(timeline) do
+
+                if not executed[index]
+                and elapsed >= event.time then
+
+                    executed[index] = true
+
+                    executeEvent(event)
+                end
             end
+
+            if elapsed >= maxTimeline then
+                break
+            end
+
+            sleep(100)
         end
 
-        -- ==================================
-        -- FINISH
-        -- ==================================
-        if elapsed >= maxTimeline + 3 then
-
-            isCooking = false
-            currentEvent = "FINISHED"
-
-            logToConsole("`9[FINISH] `wCooking Finished")
-
+        if not isCooking then
             break
         end
 
-        sleep(100)
+        cycle = cycle + 1
+
+        logToConsole("`2[CYCLE COMPLETE] Starting next cycle...")
+
+        sleep(1000)
     end
+
+    currentEvent = "STOPPED"
+    logToConsole("`4[STOPPED]")
 end
 
 -- ==========================================
@@ -378,7 +369,5 @@ AddHook("OnVarlist", "HideOvenDialog", function(v)
         return true
     end
 end)
-
-
 
 

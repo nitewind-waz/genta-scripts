@@ -19,8 +19,8 @@ local CRIME_DATABASE = {
 	["Dr. Destructo"]     = { c1 = "2310", c2 = "2316", fillers = {"2320", "2324", "2322"} },
 	["Almighty Seth"]     = { c1 = "2326", c2 = "2328", fillers = {"2314", "2308", "2312"} },
 	["Devil Ham"]         = { c1 = "2310", c2 = "2316", fillers = {"2340", "2336", "2334"} },
-	["El Peligro"]          = {c1= "2310", c2 = "2316", fillers = {"2324", "2320", "2326"} }
-}
+	["El Peligro"]          = {c1= "2310", c2 = "2316", fillers = {"2324", "2320", "2326"} },
+	["Ms. Terry"] = {c1 = "2294",c2 = "2310",c3 = "2322",c4 = "2328",c5 = "2338"}}
 local current_villain = "None"
 local last_card_index = 1
 local kat5_step_done = false
@@ -28,9 +28,9 @@ local kat5_step_done = false
 		-- FIX: Fungsi Logger yang aman agar tidak nil
 function safeLog(msg)
 	if logToConsole then
-		logToConsole("`4[DEBUG] `w" .. msg)
+		
 	elseif print then
-		print("[DEBUG] " .. msg)
+		
 	end
 end
 		
@@ -68,9 +68,19 @@ function auto_select_deck(content, strategy)
 		return
 	end
 		
-	local selected = { [strategy.c1] = true, [strategy.c2] = true }
+	local selected = {}
+	
+	if strategy.c1 then selected[strategy.c1] = true end
+	if strategy.c2 then selected[strategy.c2] = true end
 	if strategy.c3 then selected[strategy.c3] = true end
-	for _, fID in ipairs(strategy.fillers) do selected[fID] = true end
+	if strategy.c4 then selected[strategy.c4] = true end
+	if strategy.c5 then selected[strategy.c5] = true end
+	
+	if strategy.fillers then
+	    for _, fID in ipairs(strategy.fillers) do
+	        selected[fID] = true
+	    end
+	end
 		
 		    -- Structure sesuai packet client yang kamu kirim
 	local packet = "action|dialog_return\ndialog_name|crime_edit\n"
@@ -127,34 +137,80 @@ function onCrimeMain(var)
 		    local label = ""
 		
 		    if current_villain == "Kat 5" then
-		        if not kat5_step_done and content:find(strat.c1) and not content:find(strat.c1 .. "|disabled") then
-		            move = strat.c1; label = "Kat5 Start"; kat5_step_done = true
-		        elseif content:find(strat.c2) and not content:find(strat.c2 .. "|disabled") and last_card_index == 3 then
-		            move = strat.c2; label = "Kat5 Spam (2)"; last_card_index = 2
-		        elseif content:find(strat.c3) and not content:find(strat.c3 .. "|disabled") then
-		            move = strat.c3; label = "Kat5 Spam (3)"; last_card_index = 3
-		        end
-		    else
-		        local c1_r = content:find(strat.c1) and not content:find(strat.c1 .. "|disabled")
-		        local c2_r = content:find(strat.c2) and not content:find(strat.c2 .. "|disabled")
-		        if c1_r and (not c2_r or last_card_index == 2) then
-		            move = strat.c1; last_card_index = 1; label = "Counter 1"
-		        elseif c2_r then
-		            move = strat.c2; last_card_index = 2; label = "Counter 2"
-		        end
-		    end
+			    if not kat5_step_done and content:find(strat.c1) and not content:find(strat.c1 .. "|disabled") then
+			        move = strat.c1
+			        label = "Kat5 Start"
+			        kat5_step_done = true
+			
+			    elseif content:find(strat.c2) and not content:find(strat.c2 .. "|disabled") and last_card_index == 3 then
+			        move = strat.c2
+			        label = "Kat5 Spam (2)"
+			        last_card_index = 2
+			
+			    elseif content:find(strat.c3) and not content:find(strat.c3 .. "|disabled") then
+			        move = strat.c3
+			        label = "Kat5 Spam (3)"
+			        last_card_index = 3
+			    end
+			
+			elseif current_villain == "Ms. Terry" then
+			
+			    local incoming = content:match("is going to play `(%d)")
+			
+			    if incoming == "2" and content:find(strat.c1) and not content:find(strat.c1 .. "|disabled") then
+			        move = strat.c1
+			        label = "Incinerate"
+			
+			    elseif incoming == "4" and content:find(strat.c2) and not content:find(strat.c2 .. "|disabled") then
+			        move = strat.c2
+			        label = "Frost Breath"
+			
+			    elseif incoming == "9" and content:find(strat.c4) and not content:find(strat.c4 .. "|disabled") then
+			        move = strat.c4
+			        label = "Regen"
+			
+			    elseif incoming == "1" and content:find(strat.c5) and not content:find(strat.c5 .. "|disabled") then
+			        move = strat.c5
+			        label = "Megawatt Pulse"
+			
+			    elseif content:find(strat.c3) and not content:find(strat.c3 .. "|disabled") then
+			        move = strat.c3
+			        label = "Super Speed"
+			    end
+			
+			else
+			
+			    local c1_r = content:find(strat.c1) and not content:find(strat.c1 .. "|disabled")
+			    local c2_r = content:find(strat.c2) and not content:find(strat.c2 .. "|disabled")
+			
+			    if c1_r and (not c2_r or last_card_index == 2) then
+			        move = strat.c1
+			        last_card_index = 1
+			        label = "Counter 1"
+			
+			    elseif c2_r then
+			        move = strat.c2
+			        last_card_index = 2
+			        label = "Counter 2"
+			    end
+			
+			end
 		
 		    if move ~= "" then
-		        send_battle_action(tx, ty, move, label)
-		    else
-		        for _, fID in ipairs(strat.fillers) do
-		            if content:find(fID) and not content:find(fID .. "|disabled") then
-		                send_battle_action(tx, ty, fID, "Filler")
-		                return true
-		            end
-		        end
-		    send_battle_action(tx, ty, "passturn", "Skip")
-		    end
+			    send_battle_action(tx, ty, move, label)
+			else
+			
+			    if strat.fillers then
+			        for _, fID in ipairs(strat.fillers) do
+			            if content:find(fID) and not content:find(fID .. "|disabled") then
+			                send_battle_action(tx, ty, fID, "Filler")
+			                return true
+			            end
+			        end
+			    end
+			
+			    send_battle_action(tx, ty, "passturn", "Skip")
+			end
 		    return true
 		end
 	end

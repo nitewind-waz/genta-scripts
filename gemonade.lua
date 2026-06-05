@@ -3,7 +3,7 @@
 local items = {
     sprig = {id = 7000, name = "Sprig of Mint"},
     water   = {id = 822, name = "Water"},
-    orange = {id = 4984, name = "Orange Juice"}
+    orange = {id = 4984, name = "Orange Juice"},
     lemon  = {id = 4666, name = "Onion"},
     sugar   = {id = 4572, name = "Sugar"},
     fist   = {id = 18, name = "Fist"},
